@@ -18,63 +18,46 @@ import java.util.stream.Collectors;
 
 public class MainActivity extends FragmentActivity implements Fragment1.OnButtonClickListener {
 
-    private Map<Integer, Integer> frames = new ArrayMap<>();
+    private int[] frames;
     private boolean hidden;
+
+    private int [] sequence;
 
     @Override
     public void onButtonClickShuffle() {
 
-        List<Integer> list = new ArrayList<Integer>(Arrays.asList(frames.get(0), frames.get(1), frames.get(2), frames.get(3)));
+        List<Integer> list = new ArrayList<Integer>(Arrays.asList(frames[0], frames[1], frames[2], frames[3]));
         Collections.shuffle(list);
-        for (int i = 0; i < 4; i++) {
-            frames.remove(i);
-            frames.put(i, list.get(i));
-        }
-
+        for (int i = 0; i < 4; i++) frames[i] = list.get(i).intValue();
         newFragments();
     }
-    //1 2 3 4
-    //1 2 3 4
 
-    //1 2 3 4
-    //2 1 3 4
     @Override
     public void onButtonClickClockwise() {
 
-
-        frames.entrySet().stream().sorted(Map.Entry.comparingByValue());
-
-            Integer tmp = frames.get(0);
-            frames.remove(0);
-            frames.put(0, frames.get(1));
-
-            frames.remove(1);
-            frames.put(1, frames.get(2));
-
-        frames.remove(2);
-        frames.put(2, frames.get(3));
-
-        frames.remove(3);
-        frames.put(3, tmp);
-
+        int t = frames[0];
+        frames[0] = frames[1];
+        frames[1] = frames[2];
+        frames[2] = frames[3];
+        frames[3] = t;
         newFragments();
     }
 
     private void newFragments() {
 
         Fragment[] newFragments = new Fragment[]{new Fragment1(), new Fragment2(), new Fragment3(), new Fragment4()};
-
+        //--- Nowy kod
+        Fragment[] inSequence = new Fragment[] {newFragments[sequence[0]], newFragments[sequence[1]], newFragments[sequence[2]], newFragments[sequence[3]] };
+        newFragments = inSequence;
+        //--- Koniec nowego kodu
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-
-        for (int i : frames.keySet()) {
-            transaction.replace(frames.get(i), newFragments[i]);
+        for (int i = 0; i < 4; i++) {
+            transaction.replace(frames[i], newFragments[i]);
             if (hidden && !(newFragments[i] instanceof Fragment1)) transaction.hide(newFragments[i]);
         }
-
         transaction.addToBackStack(null);
         transaction.commit();
-
     }
 
     @Override
@@ -122,31 +105,22 @@ public class MainActivity extends FragmentActivity implements Fragment1.OnButton
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         if (savedInstanceState == null) {
-            int[] tmp = new int[]{R.id.frame1, R.id.frame2, R.id.frame3, R.id.frame4};
-            for(int i=0;i<4;i++){
-                frames.put(i,tmp[i]);
-            }
+            frames = new int[]{R.id.frame1, R.id.frame2, R.id.frame3, R.id.frame4};
             hidden = false;
-
+            sequence = new int[]{0,1,2,3};
             Fragment[] fragments = new Fragment[]{new Fragment1(), new Fragment2(), new Fragment3(), new Fragment4()};
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             for (int i = 0; i < 4; i++) {
-                transaction.add(frames.get(i), fragments[i]);
+                transaction.add(frames[i], fragments[i]);
             }
             transaction.addToBackStack(null);
             transaction.commit();
-
-
         } else {
-            int[] tmp = savedInstanceState.getIntArray("FRAMES");
-            for(int i=0; i<tmp.length; i++){
-                frames.put(i, tmp[i]);
-            }
-
-            hidden = savedInstanceState.getBoolean("HIDDEN");
+            frames = savedInstanceState.getIntArray("FRAMES");
+            hidden = savedInstanceState.getBoolean("HIDEN");
+            sequence = savedInstanceState.getIntArray("SEQUENCE");
         }
     }
 
@@ -162,14 +136,9 @@ public class MainActivity extends FragmentActivity implements Fragment1.OnButton
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-
-        int[] tmp = new int[4];
-        for(int i=0; i<tmp.length; i++){
-            tmp[i] = frames.get(i);
-        }
-
-        outState.putIntArray("FRAMES", tmp);
-        outState.putBoolean("HIDDEN", hidden);
+        outState.putIntArray("FRAMES", frames);
+        outState.putBoolean("HIDEN", hidden);
+        outState.putIntArray("SEQUENCE", sequence);
     }
 
 
